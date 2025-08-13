@@ -1,6 +1,6 @@
 ---
 - name: Install Maven on webservers
-  hosts: webservers
+  hosts: webserver
   become: yes
   tasks:
     - name: Update apt cache
@@ -12,7 +12,7 @@
         state: present
 
 - name: Prepare Production Server and Deploy Docker Container
-  hosts: webservers
+  hosts: webserver
   become: yes
   tasks:
     - name: Install Java
