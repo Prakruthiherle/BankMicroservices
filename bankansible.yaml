@@ -1,0 +1,64 @@
+---
+- name: Install Maven on webservers
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Update apt cache
+      command: apt update
+
+    - name: Install Maven
+      apt:
+        name: maven
+        state: present
+
+- name: Prepare Production Server and Deploy Docker Container
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Ensure Apache is running
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Remove existing container if exists
+      shell: |
+        if docker ps -a --format '{{'{{.Names}}'}}' | grep -Eq "^bankmicroservice_container$"; then
+          docker rm -f bankmicroservice_container
+        fi
+      ignore_errors: true
+
+    - name: Pull latest Docker image
+      docker_image:
+        name: "prakruthi15/javaimg:latest"
+        source: pull
+
+    - name: Run Docker container with latest image
+      docker_container:
+        name: bankmicroservice_container
+        image: "prakruthi15/javaimg:latest"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "8080:8080"
