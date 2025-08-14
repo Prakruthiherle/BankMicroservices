@@ -1,19 +1,11 @@
 ---
-- name: Install Maven on webservers
-  hosts: webserver
-  become: yes
-  tasks:
-    - name: Update apt cache
-      command: apt update
-
-    - name: Install Maven
-      apt:
-        name: maven
-        state: present
-
 - name: Prepare Production Server and Deploy Docker Container
-  hosts: webserver
+  hosts: webservers
   become: yes
+  vars:
+    image_name: prakruthi15/javaimg:latest
+    container_name: bankmicroservice_container
+
   tasks:
     - name: Install Java
       apt:
@@ -42,22 +34,22 @@
         state: started
         enabled: yes
 
-    - name: Remove existing container if exists
-      shell: |
-        if docker ps -a --format '{{'{{.Names}}'}}' | grep -Eq "^bankmicroservice_container$"; then
-          docker rm -f bankmicroservice_container
-        fi
+    - name: Remove existing container if it exists
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: absent
       ignore_errors: true
 
     - name: Pull latest Docker image
-      docker_image:
-        name: "prakruthi15/javaimg:latest"
+      community.docker.docker_image:
+        name: "{{ image_name }}"
         source: pull
+        force_source: true
 
     - name: Run Docker container with latest image
-      docker_container:
-        name: bankmicroservice_container
-        image: "prakruthi15/javaimg:latest"
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}"
         state: started
         restart_policy: always
         published_ports:
