@@ -1,6 +1,6 @@
 ---
 - name: Prepare Production Server and Deploy Docker Container
-  hosts: webservers
+  hosts: webserver
   become: yes
   vars:
     image_name: prakruthi15/javaimg:latest
